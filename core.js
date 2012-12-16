@@ -145,45 +145,20 @@ var Twitter = Maker(JsonGetter(), function (opts) {
 // tw.appendTo( $('#list') )
 
 
-// Gets the latest tweet from twitter for `opts.user`.
-function fromTwitter(list, opts) {
-  var url = "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?";
-  
-  var defaults = {
-    url:  url,
-    vars: {
-      text: [0, 'text'],
-      id:   [0, 'id'],
-      date: [0, 'created_at']
-    },
-    display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>',
-  };
-  
-  getJson(list, $.extend(defaults, opts));
-}
-
-// Gets the last track scrobbled to last.fm for `opts.user`.
-function fromLastFm(list, opts) {
-  var url = 'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1';
-  
-  var defaults = {
-    url:  url, 
+var LastFm = Maker(XmlGetter(), function(opts) {
+  return {
+    url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1', 
     vars: {
       title: ['item', 'title'],
       link:  ['item', 'link'],
       date:  ['item', 'pubDate']
     },
     display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>',
-  };
-  
-  getXml(list, $.extend(defaults, opts));
-}
+  }
+})
 
-// Gets the latest post on tumblr for `opts.user`.
-function fromTumblr(list, opts) {
-  var url = 'http://' + opts.user + '/rss';
-  
-  var defaults = {
+var Tumblr = Maker(XmlGetter(), function(opts) {
+  return {
     url: 'http://' + opts.user + '/rss',
     vars: {
       title: ['item', 'title'],
@@ -192,17 +167,12 @@ function fromTumblr(list, opts) {
       text:  ['item', 'description']
     },
     display: '<h2><a href="{{{link}}}">tumblr</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
-  };
-  
-  getXml(list, $.extend(defaults, opts));
-}
+  }
+})
 
-// Gets the latest photo on flickr for `opts.user`.
-function fromFlickr(list, opts) {
-  var url = "http://api.flickr.com/services/feeds/photos_public.gne?id=" + opts.user + "&lang=en-us&format=rss_200";
-  
-  var defaults = {
-    url: url,
+var Flickr = Maker(XmlGetter(), function(opts) {
+  return {
+    url: "http://api.flickr.com/services/feeds/photos_public.gne?id=" + opts.user + "&lang=en-us&format=rss_200",
     vars: {
       title: ['item', 'title'],
       photo: ['item', "media\\:content, content", '=url'],
@@ -210,16 +180,14 @@ function fromFlickr(list, opts) {
       link:  ['item', 'link']
     },
     display: '<h2><a href="{{{link}}}">flickr</a>: {{title}}</h2><img class="sub" src="{{{photo}}}" /> '
-  };
-  
-  getXml(list, $.extend(defaults, opts));
-}
+  }
+})
 
 var providers = {
-  flickr:    fromFlickr,
-  "last.fm": fromLastFm,
-  twitter:   fromTwitter,
-  tumblr:    fromTumblr
+  flickr:    Flickr,
+  "last.fm": LastFm,
+  twitter:   Twitter,
+  tumblr:    Tumblr
 }
 
 function startup(data) {
@@ -229,7 +197,7 @@ function startup(data) {
   $.each(data, function(i, obj) {
     var provider = providers[obj.type];
     
-    provider(list, obj);
+    provider(obj).appendTo(list);
   });
 }
 
