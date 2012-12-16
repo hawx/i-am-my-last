@@ -1,0 +1,25 @@
+body {
+  font: 12px/1.3em Menlo;
+  max-width: 500px;
+}
+
+li {
+  display: block;
+  padding: .5em;
+}
+
+h2 {
+  font-size: 12px;
+}
+
+img, section {
+  width: 100%;
+  display: block;
+  margin: 1em;
+}
+
+/*
+  .sub {
+    display: none;
+  }
+*/
