@@ -15,15 +15,15 @@ function getJson(list, opts) {
     // the value. So, say we have:
     //
     //     vars: {
-    //       title: [0, 'title']
+    //       title: ['title']
     //     }
     //
     // Which would translate to:
     //
-    //    vars['title'] = data[0]['title']
+    //    vars['title'] = data['title']
     //
     $.each(opts.vars, function(key, val) {
-      vars[key] = data;
+      vars[key] = data[0];
       $.each(val, function(i, meth) {
         vars[key] = vars[key][meth];
       });
@@ -133,9 +133,9 @@ var Twitter = Maker(JsonGetter(), function (opts) {
   return {
     url:  "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
     vars: {
-      text: [0, 'text'],
-      id:   [0, 'id'],
-      date: [0, 'created_at']
+      text: ['text'],
+      id:   ['id'],
+      date: ['created_at']
     },
     display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
   }
