@@ -141,10 +141,6 @@ var Twitter = Maker(JsonGetter(), function (opts) {
   }
 })
 
-// var tw = Twitter({user: 'hawx'})
-// tw.appendTo( $('#list') )
-
-
 var LastFm = Maker(XmlGetter(), function(opts) {
   return {
     url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1', 
@@ -157,16 +153,18 @@ var LastFm = Maker(XmlGetter(), function(opts) {
   }
 })
 
-var Tumblr = Maker(XmlGetter(), function(opts) {
+var Blog = Maker(XmlGetter(), function(opts) {
+  var name = opts.name || 'blog';
+
   return {
-    url: 'http://' + opts.user + '/rss',
+    url: opts.feed,
     vars: {
       title: ['item', 'title'],
       link:  ['item', 'link'],
       date:  ['item', 'pubDate'],
       text:  ['item', 'description']
     },
-    display: '<h2><a href="{{{link}}}">tumblr</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
+    display: '<h2><a href="{{{link}}}">' + name + '</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
   }
 })
 
@@ -187,7 +185,7 @@ var providers = {
   flickr:    Flickr,
   "last.fm": LastFm,
   twitter:   Twitter,
-  tumblr:    Tumblr
+  blog:      Blog
 }
 
 function startup(data) {
