@@ -9,7 +9,8 @@
     "type": "flickr",
     "user": "75695140@N04"
   }, {
-    "type": "tumblr",
-    "user": "tmblr.hawx.me"
+    "type": "blog",
+    "name": "tumblr",
+    "feed": "http://tmblr.hawx.me/rss"
   }
 ]
