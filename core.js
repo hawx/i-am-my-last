@@ -181,11 +181,21 @@ var Flickr = Maker(XmlGetter(), function(opts) {
   }
 })
 
+var Xml = Maker(XmlGetter(), function(opts) {
+  return {}
+})
+
+var Json = Maker(JsonGetter(), function(opts) {
+  return {}
+})
+
 var providers = {
   flickr:    Flickr,
   "last.fm": LastFm,
   twitter:   Twitter,
-  blog:      Blog
+  blog:      Blog,
+  xml:       Xml,
+  json:      Json, 
 }
 
 function startup(data) {
