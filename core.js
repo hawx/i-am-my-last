@@ -1,3 +1,5 @@
+(function($){
+
 function parseDate(str) {
   var d = new Date(Date.parse(str));
   
@@ -7,7 +9,7 @@ function parseDate(str) {
 
 // Gets some JSON from the url in `opts.url` then uses `opts.vars` and 
 // `opts.display` to add another list item in the required format.
-function getJson(list, opts) {
+function getJson(opts, callback) {
   $.getJSON(opts.url, function(data) {
     var vars = {};
     
@@ -22,7 +24,7 @@ function getJson(list, opts) {
     //
     //    vars['title'] = data['title']
     //
-    $.each(opts.vars, function(key, val) {
+    $.each(opts.vars, function(key, val) {  
       vars[key] = data;
       $.each(val, function(i, meth) {
         vars[key] = vars[key][meth];
@@ -32,42 +34,24 @@ function getJson(list, opts) {
     // Parse the date, and return in a common format.
     vars.date = parseDate(vars.date);
     
-    // Now append a new list element using Mustache with `opts.display` and the 
-    // vars found above.
-    list.append('<li>' + Mustache.render(opts.display, vars) + '</li>');
+    callback(vars)
   });
 }
 
 
-function getXml(list, opts) {
-  opts.url = "http://query.yahooapis.com/v1/public/yql?q=" +
-             encodeURIComponent('select * from xml where url="' + opts.url + '"') +
-             "&env=store://datatables.org/alltableswithkeys&format=json"
-
-  getJson(list, opts);
+function addToList(opts, list) {
+  return function(data) {
+    // Now append a new list element using Mustache with `opts.display` and the 
+    // vars found above.
+    list.append('<li>' + Mustache.render(opts.display, data) + '</li>');
+  }
 }
 
-function extend () {
-  var consumer = arguments[0],
-      providers = Array.prototype.slice.call(arguments, 1),
-      key,
-      i,
-      provider;
-  for (i in providers) {
-    provider = providers[i];
-    for (key in provider) {
-      if (provider.hasOwnProperty(key)) {
-        consumer[key] = provider[key]
-      } 
-    }
-  }
-  return consumer
-};
 
 var JsonGetter = function() {
   var getter = {
     appendTo: function(list) {
-      getJson(list, this)
+      getJson(this, addToList(this, list))
     }
   }
   return getter
@@ -76,7 +60,11 @@ var JsonGetter = function() {
 var XmlGetter = function() {
   var getter = {
     appendTo: function(list) {
-      getXml(list, this)
+      this.url = "http://query.yahooapis.com/v1/public/yql?q=" +
+                 encodeURIComponent('select * from xml where url="' + this.url + '"') +
+                 "&env=store://datatables.org/alltableswithkeys&format=json"
+      
+      getJson(this, addToList(this, list));
     }
   }
   return getter
@@ -84,9 +72,9 @@ var XmlGetter = function() {
 
 var Maker = function(getter, defaults) {
   return function(opts) {
-    var getterWithDefaults = extend(getter, defaults(opts));
+    var getterWithDefaults = $.extend(getter, defaults(opts));
   
-    return extend(getterWithDefaults, opts)
+    return $.extend(getterWithDefaults, opts)
   }
 }
 
@@ -151,7 +139,7 @@ var Json = Maker(JsonGetter(), function(opts) {
   return {}
 })
 
-var providers = {
+var Providers = {
   flickr:    Flickr,
   "last.fm": LastFm,
   twitter:   Twitter,
@@ -160,17 +148,19 @@ var providers = {
   json:      Json, 
 }
 
-function startup(data) {
-  $('body').append('<ul id="list"></ul>');
-  var list = $("#list");
-
-  $.each(data, function(i, obj) {
-    var provider = providers[obj.type];
+$.fn.myLast = function(config) {
+  var list = $(this);
+  
+  $.each(config, function(i, obj) {
+    var provider = Providers[obj.type];
     
-    provider(obj).appendTo(list);
+    if (provider == null) {
+      console.log("ERROR: No provider '" + obj.type + "'");
+    } else {
+      provider(obj).appendTo(list);
+    }
   });
-}
+};
 
-$(document).ready(function() {
-  $.getJSON('config.json', startup);
-});
+
+})(jQuery);
