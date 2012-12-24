@@ -103,74 +103,67 @@
     }
   }
   
-  
-  var Twitter = Maker(JsonGetter(), function (opts) {
-    return {
-      url:  "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
-      vars: {
-        text: [0, 'text'],
-        id:   [0, 'id'],
-        date: [0, 'created_at']
-      },
-      display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
-    }
-  })
-  
-  var LastFm = Maker(XmlGetter(), function(opts) {
-    return {
-      url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1', 
-      vars: {
-        title: ['rss', 'channel', 'item', 'title'],
-        link:  ['rss', 'channel', 'item', 'link'],
-        date:  ['rss', 'channel', 'item', 'pubDate']
-      },
-      display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>',
-    }
-  })
-  
-  var Blog = Maker(XmlGetter(), function(opts) {
-    var name = opts.name || 'blog';
-  
-    return {
-      url: opts.feed,
-      vars: {
-        title: ['rss', 'channel', 'item', 0, 'title'],
-        link:  ['rss', 'channel', 'item', 0, 'link'],
-        date:  ['rss', 'channel', 'item', 0, 'pubDate'],
-        text:  ['rss', 'channel', 'item', 0, 'description']
-      },
-      display: '<h2><a href="{{{link}}}">' + name + '</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
-    }
-  })
-  
-  var Flickr = Maker(XmlGetter(), function(opts) {
-    return {
-      url: "http://api.flickr.com/services/feeds/photos_public.gne?id=" + opts.user + "&lang=en-us&format=rss_200",
-      vars: {
-        title: ['rss', 'channel', 'item', 0, 'title', 0],
-        photo: ['rss', 'channel', 'item', 0, 'content', 'url'],
-        date:  ['rss', 'channel', 'item', 0, 'pubDate'],
-        link:  ['rss', 'channel', 'item', 0, 'link']
-      },
-      display: '<h2><a href="{{{link}}}">flickr</a>: {{title}}</h2><img class="sub" src="{{{photo}}}" /> '
-    }
-  })
-  
-  var Xml = Maker(XmlGetter(), function(opts) {
-    return {}
-  })
-  
-  var Json = Maker(JsonGetter(), function(opts) {
-    return {}
-  })
-  
+
   var Providers = {
-    flickr:    Flickr,
-    "last.fm": LastFm,
-    twitter:   Twitter,
-    blog:      Blog,
-    xml:       Xml,
-    json:      Json, 
+    flickr: Maker(XmlGetter(), function(opts) {
+      return {
+        url: "http://api.flickr.com/services/feeds/photos_public.gne?id=" + opts.user + "&lang=en-us&format=rss_200",
+        vars: {
+          title: ['rss', 'channel', 'item', 0, 'title', 0],
+          photo: ['rss', 'channel', 'item', 0, 'content', 'url'],
+          date:  ['rss', 'channel', 'item', 0, 'pubDate'],
+          link:  ['rss', 'channel', 'item', 0, 'link']
+        },
+        display: '<h2><a href="{{{link}}}">flickr</a>: {{title}}</h2><img class="sub" src="{{{photo}}}" /> '
+      }
+    }),
+    
+    "last.fm": Maker(XmlGetter(), function(opts) {
+      return {
+        url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1', 
+        vars: {
+          title: ['rss', 'channel', 'item', 'title'],
+          link:  ['rss', 'channel', 'item', 'link'],
+          date:  ['rss', 'channel', 'item', 'pubDate']
+        },
+        display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>',
+      }
+    }),
+    
+    twitter: Maker(JsonGetter(), function (opts) {
+      return {
+        url:  "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
+        vars: {
+          text: [0, 'text'],
+          id:   [0, 'id'],
+          date: [0, 'created_at']
+        },
+        display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
+      }
+    }),
+    
+    blog: Maker(XmlGetter(), function(opts) {
+      var name = opts.name || 'blog';
+    
+      return {
+        url: opts.feed,
+        vars: {
+          title: ['rss', 'channel', 'item', 0, 'title'],
+          link:  ['rss', 'channel', 'item', 0, 'link'],
+          date:  ['rss', 'channel', 'item', 0, 'pubDate'],
+          text:  ['rss', 'channel', 'item', 0, 'description']
+        },
+        display: '<h2><a href="{{{link}}}">' + name + '</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
+      }
+    }),
+    
+    xml: Maker(XmlGetter(), function(opts) {
+      return {}
+    }),
+    
+    json: Maker(JsonGetter(), function(opts) {
+      return {}
+    }), 
   }
   
   $.fn.myLast = function(config) {
