@@ -12,12 +12,27 @@ page. That page is your reputation, well done.
 
 ## Setup
 
+It is set up as a jQuery plugin, just call `myLast` on the `<ul>` to add to
+and pass the options in, for example;
+
+``` js
+$(document).ready(function() {
+  $('#list').myLast([
+    {
+      type: "twitter",
+      user: "my_user_name"
+    }
+  ])
+})
+```
+
 To setup what data to pull in edit `config.json` with the correct details. The
 file is an array of objects, each object will contain specific keys:
 
 #### `type`
 
-The provider used to retrieve data; `json`, `xml` or any others listed below.
+The provider used to retrieve data; `json`, `xml` or any of the others listed 
+below.
 
 #### `url`
 
@@ -26,98 +41,95 @@ The full url to GET.
 #### `vars`
 
 An object containing key-value pairs, where the value describes the "path" to
-find in the retrieved data. For instance with the json response,
+find in the retrieved data. For instance with the JSON response,
 
 ``` json
-[
-  {
-    "body": {
-      "text": "some text"
-    }
+[{
+  "body": {
+    "text": "some text"
   }
-]
+}]
 ```
 
 You could get the text variable with
 
 ``` json
-"vars": {
-  "text": ["body", "text"]
+vars: {
+  text: [0, "body", "text"]
 }
 ```
 
-With an xml response,
-
-``` xml
-<items>
-  <item>
-    <body text="some text">
-  </item>
-</items>
-```
-
-You would use,
-
-``` json
-"vars": {
-  "text": ["item", "body", "=text"]
-}
-```
-
-For xml, you can get an attribute value with `=attrName` and node values 
-normally.
+XML works in a similar manner. It will take some trial and error, use the inspector
+and console to help.
 
 #### `display`
 
-This string is rendered using [Mustache][m] with the `vars` specified.
-  
+Either a string or a function.
 
-All together this produces something like,
+If a string, it is rendered using [Mustache][m] with the `vars` specified.
+Something like,
 
-``` json
+``` js
 {
-  "type": "xml",
-  "url":  "http://blog.example.com/feed.xml",
-  "vars": {
-    "title":  ["item", "title"],
-    "link":   ["item", "link"],
-    "date":   ["item", "pubDate"],
-    "text":   ["item", "description"],
-    "author": ["item", "author"]
+  type: "xml",
+  url:  "http://blog.example.com/feed.xml",
+  vars: {
+    title:  ["rss", "channel", 0, "item", "title"],
+    link:   ["rss", "channel", 0, "item", "link"],
+    date:   ["rss", "channel", 0, "item", "pubDate"],
+    text:   ["rss", "channel", 0, "item", "description"],
+    author: ["rss", "channel", 0, "item", "author"]
   },
-  "display": "<h2><a href='{{{link}}}'>{{author}} wrote</a>: {{title}}</h2><section class='sub'>{{{text}}}</section>"
+  display: "<h2><a href='{{{link}}}'>{{author}} wrote</a>: {{title}}</h2><section class='sub'>{{{text}}}</section>"
 }
 ```
+
+If a function, it is passed the data and will return a string.
+
+``` js
+{
+  type: "xml",
+  url:  "http://blog.example.com/feed.xml",
+  display: function(data) {
+    var tmpl = "<h2><a href='{{link}}'>{{author}} wrote</a>: {{title}}</h2>" +
+               "<section class='sub'>{{{text}}}</section>",
+        data = data.rss.channel[0].item;
+        
+    return Mustache.render(tmpl, data);
+  }
+}
+```
+
 
 For common services there are the in built providers listed below.
 
 
 ### Twitter
 
-``` json
+``` js
 {
-  "type": "twitter",
-  "user": "your_user_name"
+  type: "twitter",
+  user: "your_user_name"
 }
 ```
 
 
 ### Last.fm
 
-``` json
+``` js
 {
-  "type": "last.fm",
-  "user": "your_user_name"
+  type: "last.fm",
+  user: "your_user_name"
 }
 ```
 
 
 ### Flickr
 
-``` json
+``` js
 {
-  "type": "flickr",
-  "user": "your_user_id"
+  type: "flickr",
+  user: "your_user_id"
 }
 ```
 
@@ -126,11 +138,11 @@ Note: `your_user_id` is the crazy number, like `XXXXXXXX@NXX`.
 
 ### Blog
 
-``` json
+``` js
 {
-  "type": "blog",
-  "name": "My Example Blog",
-  "feed": "http://blog.example.com/feed.xml"
+  type: "blog",
+  name: "My Example Blog",
+  feed: "http://blog.example.com/feed.xml"
 }
 ```
 
