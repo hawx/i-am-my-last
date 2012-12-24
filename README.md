@@ -53,7 +53,7 @@ find in the retrieved data. For instance with the JSON response,
 
 You could get the text variable with
 
-``` json
+``` js
 vars: {
   text: [0, "body", "text"]
 }
