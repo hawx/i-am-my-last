@@ -130,7 +130,7 @@
       }
     }),
     
-    twitter: Maker(JsonGetter(), function (opts) {
+    twitter: Maker(JsonGetter(), function(opts) {
       return {
         url:  "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
         vars: {
@@ -139,6 +139,35 @@
           date: [0, 'created_at']
         },
         display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
+      }
+    }),
+    
+    github: Maker(JsonGetter(), function(opts) {
+      return {
+        url:  "https://api.github.com/users/" + opts.user + "/events/public?callback=?",
+        formats: {
+          CommitCommentEvent: 'commented on {{repo.name}}',
+          CreateEvent:        'created {{repo.name}}/{{payload.ref}}',
+          DeleteEvent:        'deleted {{ref.name}}',
+          FollowEvent:        'followed {{target.login}}',
+          ForkEvent:          'forked {{forkee.name}}',
+          ForkApplyEvent:     'applied {{head}}',
+          GistEvent:          '{{payload.action}} gist {{gist.html_url}}',
+          IssueCommentEvent:  '{{payload.action}} comment on {{repo.name}}#{{payload.issue.number}}',
+          PullRequestEvent:   '{{payload.action}} issue {{number}} on {{repo.name}}',
+          PushEvent:          'pushed to {{repo.name}}',
+          WatchEvent:         '{{payload.action}} watching {{repo.name}}'
+        },
+        display: function(data) {
+          var head = '<h2><a href="{{url}}">github:</a> ',
+              tail = '</h2>';
+        
+          console.log(data);
+        
+          data = data.data[0];
+        
+          return Mustache.render(head + this.formats[data.type] + tail, data);
+        }
       }
     }),
     
