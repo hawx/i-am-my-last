@@ -18,6 +18,10 @@ img, section {
   margin: 1em;
 }
 
+a {
+  color: blue;
+}
+
 /*
   .sub {
     display: none;
