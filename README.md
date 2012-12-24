@@ -146,3 +146,12 @@ Note: `your_user_id` is the crazy number, like `XXXXXXXX@NXX`.
 }
 ```
 
+### Github
+
+``` js
+{
+  type: "github",
+  user: "your_user_name"
+}
+```
+
