@@ -62,9 +62,9 @@
     }
   }
   
-  function map(obj, func) {
+  function mapObject(obj, f) {
     for (var key in obj) {
-      obj[key] = func(obj[key])
+      obj[key] = f(obj[key])
     }
     return obj
   }
@@ -85,7 +85,7 @@
                    encodeURIComponent('select * from xml where url="' + this.url + '"') +
                    "&env=store://datatables.org/alltableswithkeys&format=json"
   
-        this.vars = map(this.vars, function(e) {
+        this.vars = mapObject(this.vars, function(e) {
           return ['query', 'results'].concat(e);
         });
         
