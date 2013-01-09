@@ -11,7 +11,7 @@
   function getJson(opts, callback) {
     $.getJSON(opts.url, function(data) {
       var vars = {};
-      
+
       if (opts.vars) {
       
         // For each element of `opts.vars` run through the given call path to get 
@@ -83,8 +83,8 @@
       appendTo: function(list) {
         this.url = "http://query.yahooapis.com/v1/public/yql?q=" +
                    encodeURIComponent('select * from xml where url="' + this.url + '"') +
-                   "&env=store://datatables.org/alltableswithkeys&format=json"
-  
+                   "&env=store://datatables.org/alltableswithkeys&format=json";
+
         this.vars = mapObject(this.vars, function(e) {
           return ['query', 'results'].concat(e);
         });
@@ -160,11 +160,8 @@
         },
         display: function(data) {
           var head = '<h2><a href="{{url}}">github:</a> ',
-              tail = '</h2>';
-        
-          console.log(data);
-        
-          data = data.data[0];
+              tail = '</h2>',
+              data = data.data[0];
         
           return Mustache.render(head + this.formats[data.type] + tail, data);
         }
