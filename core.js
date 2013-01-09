@@ -154,7 +154,8 @@
           ForkApplyEvent:     'applied {{head}}',
           GistEvent:          '{{payload.action}} gist {{gist.html_url}}',
           IssueCommentEvent:  '{{payload.action}} comment on {{repo.name}}#{{payload.issue.number}}',
-          PullRequestEvent:   '{{payload.action}} issue {{number}} on {{repo.name}}',
+          IssuesEvent:        '{{payload.action}} issue #{{payload.issue.number}} on {{repo.name}}',
+          PullRequestEvent:   '{{payload.action}} issue #{{payload.issue.number}} on {{repo.name}}',
           PushEvent:          'pushed to {{repo.name}}',
           WatchEvent:         '{{payload.action}} watching {{repo.name}}'
         },
@@ -162,7 +163,7 @@
           var head = '<h2><a href="{{url}}">github:</a> ',
               tail = '</h2>',
               data = data.data[0];
-        
+
           return Mustache.render(head + this.formats[data.type] + tail, data);
         }
       }
