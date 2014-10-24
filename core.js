@@ -2,19 +2,19 @@
 
   function parseDate(str) {
     var d = new Date(Date.parse(str));
-    
+
     return d.toISOString();
   }
-  
-  // Gets some JSON from the url in `opts.url` then uses `opts.vars` and 
+
+  // Gets some JSON from the url in `opts.url` then uses `opts.vars` and
   // `opts.display` to add another list item in the required format.
   function getJson(opts, callback) {
     $.getJSON(opts.url, function(data) {
       var vars = {};
 
       if (opts.vars) {
-      
-        // For each element of `opts.vars` run through the given call path to get 
+
+        // For each element of `opts.vars` run through the given call path to get
         // the value. So, say we have:
         //
         //     vars: {
@@ -25,59 +25,59 @@
         //
         //    vars['title'] = data['title']
         //
-        $.each(opts.vars, function(key, val) {  
+        $.each(opts.vars, function(key, val) {
           vars[key] = data;
           $.each(val, function(i, meth) {
             vars[key] = vars[key][meth];
           });
         });
-        
+
         if (vars.date) {
           // Parse the date, and return in a common format.
           vars.date = parseDate(vars.date);
         };
-        
+
         callback(vars);
-      
+
       } else {
         callback(data);
       }
     });
   }
-  
-  
+
+
   function addToList(opts, list) {
     return function(data) {
-      var text = ''
-    
+      var text = '';
+
       if (typeof opts.display == "function") {
         text = opts.display(data);
       } else {
         text = Mustache.render(opts.display, data);
       }
-    
-      // Now append a new list element using Mustache with `opts.display` and the 
+
+      // Now append a new list element using Mustache with `opts.display` and the
       // vars found above.
       list.append('<li>' + text + '</li>');
-    }
+    };
   }
-  
+
   function mapObject(obj, f) {
     for (var key in obj) {
-      obj[key] = f(obj[key])
+      obj[key] = f(obj[key]);
     }
-    return obj
+    return obj;
   }
-  
+
   var JsonGetter = function() {
     var getter = {
       appendTo: function(list) {
-        getJson(this, addToList(this, list))
+        getJson(this, addToList(this, list));
       }
-    }
-    return getter
-  }
-  
+    };
+    return getter;
+  };
+
   var XmlGetter = function() {
     var getter = {
       appendTo: function(list) {
@@ -88,21 +88,21 @@
         this.vars = mapObject(this.vars, function(e) {
           return ['query', 'results'].concat(e);
         });
-        
+
         getJson(this, addToList(this, list));
       }
-    }
-    return getter
+    };
+    return getter;
   };
-  
+
   var Maker = function(getter, defaults) {
     return function(opts) {
       var getterWithDefaults = $.extend(getter, defaults(opts));
-    
-      return $.extend(getterWithDefaults, opts)
-    }
-  }
-  
+
+      return $.extend(getterWithDefaults, opts);
+    };
+  };
+
 
   var Providers = {
     flickr: Maker(XmlGetter(), function(opts) {
@@ -115,21 +115,21 @@
           link:  ['rss', 'channel', 'item', 0, 'link']
         },
         display: '<h2><a href="{{{link}}}">flickr</a>: {{title}}</h2><img class="sub" src="{{{photo}}}" /> '
-      }
+      };
     }),
-    
+
     "last.fm": Maker(XmlGetter(), function(opts) {
       return {
-        url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1', 
+        url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1',
         vars: {
           title: ['rss', 'channel', 'item', 'title'],
           link:  ['rss', 'channel', 'item', 'link'],
           date:  ['rss', 'channel', 'item', 'pubDate']
         },
-        display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>',
-      }
+        display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>'
+      };
     }),
-    
+
     twitter: Maker(JsonGetter(), function(opts) {
       return {
         url:  "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
@@ -139,9 +139,9 @@
           date: [0, 'created_at']
         },
         display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
-      }
+      };
     }),
-    
+
     github: Maker(JsonGetter(), function(opts) {
       return {
         url:  "https://api.github.com/users/" + opts.user + "/events/public?callback=?",
@@ -166,12 +166,12 @@
 
           return Mustache.render(head + this.formats[data.type] + tail, data);
         }
-      }
+      };
     }),
-    
+
     blog: Maker(XmlGetter(), function(opts) {
       var name = opts.name || 'blog';
-    
+
       return {
         url: opts.feed,
         vars: {
@@ -181,24 +181,24 @@
           text:  ['rss', 'channel', 'item', 0, 'description']
         },
         display: '<h2><a href="{{{link}}}">' + name + '</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
-      }
+      };
     }),
-    
+
     xml: Maker(XmlGetter(), function(opts) {
-      return {}
+      return {};
     }),
-    
+
     json: Maker(JsonGetter(), function(opts) {
-      return {}
-    }), 
-  }
-  
+      return {};
+    })
+  };
+
   $.fn.myLast = function(config) {
     var list = $(this);
-    
+
     $.each(config, function(i, obj) {
       var provider = Providers[obj.type];
-      
+
       if (provider == null) {
         console.log("ERROR: No provider '" + obj.type + "'");
       } else {
@@ -206,5 +206,5 @@
       }
     });
   };
-  
+
 })(jQuery);
