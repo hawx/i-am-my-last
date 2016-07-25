@@ -1,4 +1,4 @@
-> Your reputation's only as good as the last piece of content you gave to a 
+> Your reputation's only as good as the last piece of content you gave to a
 > social network.
 
 - Warren Ellis (http://www.warrenellis.com/?p=13972)
@@ -6,8 +6,8 @@
 
 # I am my last _____
 
-Aggregate your last (tweet / blog post / photo / listen / ...) onto a single 
-page. That page is your reputation, well done.
+Aggregate your last (tweet / blog post / photo / listen / ...) onto a single
+page.
 
 
 ## Setup
@@ -31,7 +31,7 @@ file is an array of objects, each object will contain specific keys:
 
 #### `type`
 
-The provider used to retrieve data; `json`, `xml` or any of the others listed 
+The provider used to retrieve data; `json`, `xml` or any of the others listed
 below.
 
 #### `url`
@@ -94,7 +94,7 @@ If a function, it is passed the data and will return a string.
     var tmpl = "<h2><a href='{{link}}'>{{author}} wrote</a>: {{title}}</h2>" +
                "<section class='sub'>{{{text}}}</section>",
         data = data.rss.channel[0].item;
-        
+
     return Mustache.render(tmpl, data);
   }
 }
@@ -154,4 +154,3 @@ Note: `your_user_id` is the crazy number, like `XXXXXXXX@NXX`.
   user: "your_user_name"
 }
 ```
-

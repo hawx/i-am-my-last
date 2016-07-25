@@ -66,17 +66,7 @@
 
   function addToList(opts, list) {
     return function(data) {
-      var text = '';
-
-      if (typeof opts.display == "function") {
-        text = opts.display(data);
-      } else {
-        text = Mustache.render(opts.display, data);
-      }
-
-      // Now append a new list element using Mustache with `opts.display` and the
-      // vars found above.
-      list.innerHTML += '<li>' + text + '</li>';
+      list.innerHTML += '<li>' + opts.display(data) + '</li>';
     };
   }
 
@@ -135,7 +125,7 @@
           date:  data => data.pubDate,
           link:  data => data.link
         },
-        display: '<h2><a href="{{{link}}}">flickr</a>: {{title}}</h2><img class="sub" src="{{{photo}}}" /> '
+        display: data => `<h2><a href="${data.link}">flickr</a>: ${data.title}</h2><img class="sub" src="${data.photo}" /> `
       };
     }),
 
@@ -148,7 +138,7 @@
           link:  data => data.link,
           date:  data => data.pubDate
         },
-        display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>'
+        display: data => `<h2><a href="${data.link}">last.fm</a>: ${data.title}</h2>`
       };
     }),
 
@@ -160,7 +150,7 @@
           id:   data => data[0].id,
           date: data => data[0].created_at
         },
-        display: '<h2><a href="//twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
+        display: data => `<h2><a href="//twitter.com/${opts.user}/status/${data.id}">twitter</a>: ${data.text}</h2>`
       };
     }),
 
@@ -168,25 +158,25 @@
       return {
         url:  "//api.github.com/users/" + opts.user + "/events/public",
         formats: {
-          CommitCommentEvent: 'commented on {{repo.name}}',
-          CreateEvent:        'created {{repo.name}}/{{payload.ref}}',
-          DeleteEvent:        'deleted {{ref.name}}',
-          FollowEvent:        'followed {{target.login}}',
-          ForkEvent:          'forked {{forkee.name}}',
-          ForkApplyEvent:     'applied {{head}}',
-          GistEvent:          '{{payload.action}} gist {{gist.html_url}}',
-          IssueCommentEvent:  '{{payload.action}} comment on {{repo.name}}#{{payload.issue.number}}',
-          IssuesEvent:        '{{payload.action}} issue #{{payload.issue.number}} on {{repo.name}}',
-          PullRequestEvent:   '{{payload.action}} issue #{{payload.issue.number}} on {{repo.name}}',
-          PushEvent:          'pushed to {{repo.name}}',
-          WatchEvent:         '{{payload.action}} watching {{repo.name}}'
+          CommitCommentEvent: data => `commented on ${data.repo.name}`,
+          CreateEvent:        data => `created ${data.repo.name}/${data.payload.ref}`,
+          DeleteEvent:        data => `deleted ${data.ref.name}`,
+          FollowEvent:        data => `followed ${data.target.login}`,
+          ForkEvent:          data => `forked ${data.forkee.name}`,
+          ForkApplyEvent:     data => `applied ${data.head}`,
+          GistEvent:          data => `${data.payload.action} gist ${data.gist.html_url}`,
+          IssueCommentEvent:  data => `${data.payload.action} comment on ${data.repo.name}#${data.payload.issue.number}`,
+          IssuesEvent:        data => `${data.payload.action} issue #${data.payload.issue.number} on ${data.repo.name}`,
+          PullRequestEvent:   data => `${data.payload.action} issue #${data.payload.issue.number} on ${data.repo.name}`,
+          PushEvent:          data => `pushed to ${data.repo.name}`,
+          WatchEvent:         data => `${data.payload.action} watching ${data.repo.name}`
         },
         display: function(data) {
           var head = '<h2><a href="{{url}}">github</a>: ',
               tail = '</h2>',
               data = data[0];
 
-          return Mustache.render(head + this.formats[data.type] + tail, data);
+          return `<h2><a href="${data.url}">github</a>: ${this.formats[data.type](data)}</h2>`;
         }
       };
     }),
@@ -198,12 +188,12 @@
         url: opts.feed,
         base: data => maybeFirst(data.rss.channel.item),
         vars: {
-          title: data => data.title,
+          title: data => data.title || '',
           link:  data => data.link,
           date:  data => data.pubDate,
           text:  data => data.description.replace('<img src="http:', '<img src="https:')
         },
-        display: '<h2><a href="{{{link}}}">' + name + '</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
+        display: data => `<h2><a href="${data.link}">${name}</a>: ${data.title}</h2><section class="sub">${data.text}</section>`
       };
     }),
 
