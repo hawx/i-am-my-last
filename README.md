@@ -12,27 +12,14 @@ page.
 
 ## Setup
 
-It is set up as a jQuery plugin, just call `myLast` on the `<ul>` to add to
-and pass the options in, for example;
+For an example, see `index.html`. Change the config values to the correct URLs
+for yourself.
 
-``` js
-$(document).ready(function() {
-  $('#list').myLast([
-    {
-      type: "twitter",
-      user: "my_user_name"
-    }
-  ])
-})
-```
-
-To setup what data to pull in edit `config.json` with the correct details. The
-file is an array of objects, each object will contain specific keys:
+The `twitter` and `last.fm` providers are currently broken.
 
 #### `type`
 
-The provider used to retrieve data; `json`, `xml` or any of the others listed
-below.
+The provider used to retrieve data; `json`, `xml` or any of the others listed.
 
 #### `url`
 
@@ -40,8 +27,8 @@ The full url to GET.
 
 #### `vars`
 
-An object containing key-value pairs, where the value describes the "path" to
-find in the retrieved data. For instance with the JSON response,
+An object containing key-value pairs, where the value is a function that returns
+the part of the data required. For instance with the JSON response,
 
 ``` json
 [{
@@ -55,7 +42,7 @@ You could get the text variable with
 
 ``` js
 vars: {
-  text: [0, "body", "text"]
+  text: data => data[0].body.text
 }
 ```
 
@@ -64,7 +51,7 @@ and console to help.
 
 #### `display`
 
-Either a string or a function.
+A function that acts on the defined `vars` and returns a string.
 
 If a string, it is rendered using [Mustache][m] with the `vars` specified.
 Something like,
@@ -73,30 +60,15 @@ Something like,
 {
   type: "xml",
   url:  "http://blog.example.com/feed.xml",
+  base: data => data.rss.channel[0].item,
   vars: {
-    title:  ["rss", "channel", 0, "item", "title"],
-    link:   ["rss", "channel", 0, "item", "link"],
-    date:   ["rss", "channel", 0, "item", "pubDate"],
-    text:   ["rss", "channel", 0, "item", "description"],
-    author: ["rss", "channel", 0, "item", "author"]
+    title:  data => data.title,
+    link:   data => data.link,
+    date:   data => data.pubDate,
+    text:   data => data.description,
+    author: data => data.author
   },
-  display: "<h2><a href='{{{link}}}'>{{author}} wrote</a>: {{title}}</h2><section class='sub'>{{{text}}}</section>"
-}
-```
-
-If a function, it is passed the data and will return a string.
-
-``` js
-{
-  type: "xml",
-  url:  "http://blog.example.com/feed.xml",
-  display: function(data) {
-    var tmpl = "<h2><a href='{{link}}'>{{author}} wrote</a>: {{title}}</h2>" +
-               "<section class='sub'>{{{text}}}</section>",
-        data = data.rss.channel[0].item;
-
-    return Mustache.render(tmpl, data);
-  }
+  display: data => `<h2><a href='${data.link}'>${data.author} wrote</a>: ${data.title}</h2><section class='sub'>${data.text}</section>`
 }
 ```
 
