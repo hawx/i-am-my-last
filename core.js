@@ -1,50 +1,76 @@
-(function($){
+(function(window){
+
+  function extend(obj, props) {
+    let newObj = {};
+
+    for (let prop in obj) {
+      if (obj.hasOwnProperty(prop)) {
+        newObj[prop] = obj[prop];
+      }
+    }
+
+    for (let prop in props) {
+      if (props.hasOwnProperty(prop)) {
+        newObj[prop] = props[prop];
+      }
+    }
+
+    return newObj;
+  }
 
   function parseDate(str) {
-    var d = new Date(Date.parse(str));
+    try {
+      var d = new Date(Date.parse(str));
 
-    return d.toISOString();
+      return d.toISOString();
+    } catch (err) {
+      return "ugh, idk";
+    }
   }
 
   // Gets some JSON from the url in `opts.url` then uses `opts.vars` and
   // `opts.display` to add another list item in the required format.
   function getJson(opts, callback) {
-    $.getJSON(opts.url, function(data) {
-      var vars = {};
+    fetch(opts.url)
+      .then(response => response.json())
+      .then(data => {
+        var vars = {};
 
-      if (opts.vars) {
+        if (opts.vars) {
+          // For each element of `opts.vars` run through the given call path to get
+          // the value. So, say we have:
+          //
+          //     vars: {
+          //       title: ['title']
+          //     }
+          //
+          // Which would translate to:
+          //
+          //    vars['title'] = data['title']
+          //
+          for (var key in opts.vars) {
+            vars[key] = data;
+            opts.vars[key].forEach(meth => {
+              if (meth === 0 && vars[key].length === undefined) {
+                return;
+              }
 
-        // For each element of `opts.vars` run through the given call path to get
-        // the value. So, say we have:
-        //
-        //     vars: {
-        //       title: ['title']
-        //     }
-        //
-        // Which would translate to:
-        //
-        //    vars['title'] = data['title']
-        //
-        $.each(opts.vars, function(key, val) {
-          vars[key] = data;
-          $.each(val, function(i, meth) {
-            vars[key] = vars[key][meth];
-          });
-        });
+              vars[key] = vars[key][meth];
+            });
+          }
 
-        if (vars.date) {
-          // Parse the date, and return in a common format.
-          vars.date = parseDate(vars.date);
-        };
+          if (vars.date) {
+            // Parse the date, and return in a common format.
+            vars.date = parseDate(vars.date);
+          }
 
-        callback(vars);
-
-      } else {
-        callback(data);
-      }
-    });
+          callback(vars);
+        } else {
+          callback(data);
+        }
+      })
+      .catch(err => console.warn(err));
   }
-
 
   function addToList(opts, list) {
     return function(data) {
@@ -58,7 +84,7 @@
 
       // Now append a new list element using Mustache with `opts.display` and the
       // vars found above.
-      list.append('<li>' + text + '</li>');
+      list.innerHTML += '<li>' + text + '</li>';
     };
   }
 
@@ -97,9 +123,9 @@
 
   var Maker = function(getter, defaults) {
     return function(opts) {
-      var getterWithDefaults = $.extend(getter, defaults(opts));
+      var getterWithDefaults = extend(getter, defaults(opts));
 
-      return $.extend(getterWithDefaults, opts);
+      return extend(getterWithDefaults, opts);
     };
   };
 
@@ -144,7 +170,7 @@
 
     github: Maker(JsonGetter(), function(opts) {
       return {
-        url:  "https://api.github.com/users/" + opts.user + "/events/public?callback=?",
+        url:  "https://api.github.com/users/" + opts.user + "/events/public",
         formats: {
           CommitCommentEvent: 'commented on {{repo.name}}',
           CreateEvent:        'created {{repo.name}}/{{payload.ref}}',
@@ -160,9 +186,9 @@
           WatchEvent:         '{{payload.action}} watching {{repo.name}}'
         },
         display: function(data) {
-          var head = '<h2><a href="{{url}}">github:</a> ',
+          var head = '<h2><a href="{{url}}">github</a>: ',
               tail = '</h2>',
-              data = data.data[0];
+              data = data[0];
 
           return Mustache.render(head + this.formats[data.type] + tail, data);
         }
@@ -193,10 +219,8 @@
     })
   };
 
-  $.fn.myLast = function(config) {
-    var list = $(this);
-
-    $.each(config, function(i, obj) {
+  window.myLast = (list, config) => {
+    config.forEach(obj => {
       var provider = Providers[obj.type];
 
       if (provider == null) {
@@ -206,5 +230,4 @@
       }
     });
   };
-
-})(jQuery);
+})(window);
