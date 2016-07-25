@@ -36,27 +36,15 @@
       .then(data => {
         var vars = {};
 
-        if (opts.vars) {
-          // For each element of `opts.vars` run through the given call path to get
-          // the value. So, say we have:
-          //
-          //     vars: {
-          //       title: ['title']
-          //     }
-          //
-          // Which would translate to:
-          //
-          //    vars['title'] = data['title']
-          //
-          for (var key in opts.vars) {
-            vars[key] = data;
-            opts.vars[key].forEach(meth => {
-              if (meth === 0 && vars[key].length === undefined) {
-                return;
-              }
+        if (opts.base) {
+          data = opts.base(data);
+        }
 
-              vars[key] = vars[key][meth];
-            });
+        if (opts.vars) {
+          for (var key in opts.vars) {
+            let val = opts.vars[key];
+
+            vars[key] = val(data);
           }
 
           if (vars.date) {
@@ -69,7 +57,11 @@
           callback(data);
         }
       })
-      .catch(err => console.warn(err));
+      .catch(err => console.warn(opts.url, err));
+  }
+
+  function maybeFirst(thing) {
+    return thing.length === undefined ? thing : thing[0];
   }
 
   function addToList(opts, list) {
@@ -107,13 +99,16 @@
   var XmlGetter = function() {
     var getter = {
       appendTo: function(list) {
-        this.url = "http://query.yahooapis.com/v1/public/yql?q=" +
-                   encodeURIComponent('select * from xml where url="' + this.url + '"') +
-                   "&env=store://datatables.org/alltableswithkeys&format=json";
+        this.url = "//query.yahooapis.com/v1/public/yql?q=" +
+          encodeURIComponent('select * from xml where url="' + this.url + '"') +
+          "&env=store://datatables.org/alltableswithkeys&format=json";
 
-        this.vars = mapObject(this.vars, function(e) {
-          return ['query', 'results'].concat(e);
-        });
+        if (this.base) {
+          var oldBase = this.base;
+          this.base = data => oldBase(data.query.results);
+        } else {
+          this.base = data => data.query.results;
+        }
 
         getJson(this, addToList(this, list));
       }
@@ -129,16 +124,16 @@
     };
   };
 
-
   var Providers = {
     flickr: Maker(XmlGetter(), function(opts) {
       return {
         url: "http://api.flickr.com/services/feeds/photos_public.gne?id=" + opts.user + "&lang=en-us&format=rss_200",
+        base: data => maybeFirst(data.rss.channel.item),
         vars: {
-          title: ['rss', 'channel', 'item', 0, 'title', 0],
-          photo: ['rss', 'channel', 'item', 0, 'content', 'url'],
-          date:  ['rss', 'channel', 'item', 0, 'pubDate'],
-          link:  ['rss', 'channel', 'item', 0, 'link']
+          title: data => data.title[0],
+          photo: data => data.content.url.replace(/^http:/, 'https:'),
+          date:  data => data.pubDate,
+          link:  data => data.link
         },
         display: '<h2><a href="{{{link}}}">flickr</a>: {{title}}</h2><img class="sub" src="{{{photo}}}" /> '
       };
@@ -146,11 +141,12 @@
 
     "last.fm": Maker(XmlGetter(), function(opts) {
       return {
-        url:  'http://ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1',
+        url:  '//ws.audioscrobbler.com/1.0/user/' + opts.user + '/recenttracks.rss?limit=1',
+        base: data => data.rss.channel.item,
         vars: {
-          title: ['rss', 'channel', 'item', 'title'],
-          link:  ['rss', 'channel', 'item', 'link'],
-          date:  ['rss', 'channel', 'item', 'pubDate']
+          title: data => data.title,
+          link:  data => data.link,
+          date:  data => data.pubDate
         },
         display: '<h2><a href="{{{link}}}">last.fm</a>: {{title}}</h2>'
       };
@@ -158,19 +154,19 @@
 
     twitter: Maker(JsonGetter(), function(opts) {
       return {
-        url:  "https://api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
+        url:  "//api.twitter.com/1/statuses/user_timeline/" + opts.user + ".json?count=1&include_rts=1&callback=?",
         vars: {
-          text: [0, 'text'],
-          id:   [0, 'id'],
-          date: [0, 'created_at']
+          text: data => data[0].text,
+          id:   data => data[0].id,
+          date: data => data[0].created_at
         },
-        display: '<h2><a href="http://twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
+        display: '<h2><a href="//twitter.com/' + opts.user + '/status/{{id}}">twitter</a>: {{text}}</h2>'
       };
     }),
 
     github: Maker(JsonGetter(), function(opts) {
       return {
-        url:  "https://api.github.com/users/" + opts.user + "/events/public",
+        url:  "//api.github.com/users/" + opts.user + "/events/public",
         formats: {
           CommitCommentEvent: 'commented on {{repo.name}}',
           CreateEvent:        'created {{repo.name}}/{{payload.ref}}',
@@ -200,11 +196,12 @@
 
       return {
         url: opts.feed,
+        base: data => maybeFirst(data.rss.channel.item),
         vars: {
-          title: ['rss', 'channel', 'item', 0, 'title'],
-          link:  ['rss', 'channel', 'item', 0, 'link'],
-          date:  ['rss', 'channel', 'item', 0, 'pubDate'],
-          text:  ['rss', 'channel', 'item', 0, 'description']
+          title: data => data.title,
+          link:  data => data.link,
+          date:  data => data.pubDate,
+          text:  data => data.description.replace('<img src="http:', '<img src="https:')
         },
         display: '<h2><a href="{{{link}}}">' + name + '</a>: {{title}}</h2><section class="sub">{{{text}}}</section>'
       };
